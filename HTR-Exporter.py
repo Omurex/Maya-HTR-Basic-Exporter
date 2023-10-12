@@ -1,4 +1,4 @@
-
+# To work correctly, have root selected before running
 
 
 
@@ -11,8 +11,9 @@ class Joint:
     
     TO_STRING_INDENT_SPACING = 2
     
-    def __init__(self, _name, _children):
+    def __init__(self, _name, _parent, _children):
         self.name = _name
+        self.parent = _parent
         self.children = _children
         
     def __str__(self):
@@ -32,10 +33,19 @@ class Joint:
             returnStr += self.children[i].to_hierarchy_string(spacing + self.TO_STRING_INDENT_SPACING)
             
         return returnStr
+        
+        
+    def get_parent_name(self) -> str:
+        
+        if self.parent is None:
+            return "GLOBAL"
+            
+        else:
+            return self.parent.name
 
 
 
-def construct_joint_hierarchy(mayaObject) -> Joint:
+def construct_joint_hierarchy(mayaObject, jointParent = None) -> Joint:
     
     if(cm.objectType(mayaObject, isType = "joint") == False): # If passed in object isn't joint, return null
         return None
@@ -44,26 +54,25 @@ def construct_joint_hierarchy(mayaObject) -> Joint:
     
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
-    #print("PARENT: " + str(mayaObject) + " | CHILDREN: " + str(childMayaObjects))
+    newJoint = Joint(str(mayaObject), jointParent, None) # Construct new joint, fill in children later
     
+    # Loop through children, and try to add them as joint children if they are joints
     for i in range(len(childMayaObjects)):
-        possibleJoint = construct_joint_hierarchy(childMayaObjects[i])
+        possibleJoint = construct_joint_hierarchy(childMayaObjects[i], newJoint)
         if possibleJoint != None:
             childJoints.append(possibleJoint)
             
-    return Joint(str(mayaObject), childJoints)
-    
-    #joints.append(Joint(NULL, NULL))
-
-
-# To work correctly, have root selected before running
+    newJoint.children = childJoints
+            
+    return newJoint
 
 #while(
 
 #relatives = cm.listRelatives(ad = True)
 #print(relatives)
 
-def main():
+
+def handle_selected_joint():
     
     mayaSelectedObject = cm.ls(sl = True) # Get all selected objects
 
@@ -72,15 +81,30 @@ def main():
         
     mayaSelectedObject = mayaSelectedObject[0] # Get first item in selection
     
-    print(construct_joint_hierarchy(mayaSelectedObject))
+    #if(cm.objectType(mayaSelectedObject, isType = "joint") == False):
+     #   return
+    
+    rootJoint = construct_joint_hierarchy(mayaSelectedObject)
+    
+    print(rootJoint)
+
+
+def main():
+    
+    handle_selected_joint()
+    
+    print(cm.playbackOptions(fps = True))
         
     # Write to file
     htr = open("HTR-Result.htr", "w")
     htr.close()
+    
+    #print(cm.currentTime(query = True))
+    #print(cm.keyframe(keyframeCount = True)) # Error
+    #print(cm.controller(allControllers = True)) # Returns None
+    #print(cm.timeEditor(query = True)) # Error
+    print(cm.timeEditorClip())
 
-#print(construct_joint_hierarchy(cm.ls(sl = True)[0]))
-
-#numSegments = 0
 
 if __name__ == "__main__":
     main()
