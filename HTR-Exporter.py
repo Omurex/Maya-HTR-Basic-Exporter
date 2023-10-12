@@ -110,7 +110,7 @@ def get_transformation_info_for_timeline(mayaObject, numFrames):
 
 
 
-def get_num_frames(mayaObject):
+def get_num_frames():
     
     # Found out how to interact with keyframe data from following video:
     # https://www.youtube.com/watch?v=A5EnANHt9Rw
@@ -173,7 +173,7 @@ def handle_selected_joint():
     if(cm.objectType(mayaSelectedObject, isType = "joint") == False):
         return
     
-    numFrames = get_num_frames(mayaSelectedObject)
+    numFrames = get_num_frames()
     
     rootJoint, numJoints = construct_joint_hierarchy(mayaSelectedObject, numFrames)
     
@@ -182,7 +182,7 @@ def handle_selected_joint():
 
 # Convert units found with "currentUnit" to an fps
 # Have to do it like this because for some reason fps isn't readily available to scripts
-def unit_to_fps(unit):
+def time_unit_to_fps(unit):
     
     # Used this form post to figure out how to get fps
     # https://forums.autodesk.com/t5/maya-programming/getting-the-frames-per-second-of-a-scene/td-p/6543383
@@ -213,26 +213,66 @@ def get_fps():
     return unit_to_fps(cm.currentUnit(q = True, time = True))
     
     
-def get_units():
+def get_measurement_units():
     # Gets us our cm
     return cm.currentUnit(q = True) 
 
 
+def write_line(htr, line):
+    htr.write(line + "\n")
 
-def write_htr_file(rootJoint):
+
+def get_segment_names_and_hierarchy(currentJoint) -> str:
     
+    returnStr = ""
+    
+    if currentJoint.parent == None:
+         returnStr = currentJoint.name + "\tGLOBAL\n"
+    else:
+        returnStr = currentJoint.name + "\t" + currentJoint.parent.name + "\n"
+    
+    for i in range(len(currentJoint.children)):
+        returnStr += get_segment_names_and_hierarchy(currentJoint.children[i])
+        
+    return returnStr
+
+
+def write_htr_file(rootJoint, numJoints):
+    # Write to file
+    htr = open("HTR-Result.htr", "w")
+    
+    write_line(htr, "# Maya Export HTR")
+    
+    write_line(htr, "[Header]")
+    write_line(htr, "# KeyWord<space>Value<CR>")
+    write_line(htr, "FileType htr")
+    write_line(htr, "DataType HTRS")
+    write_line(htr, "FileVersion 1")
+    write_line(htr, "NumSegments " + str(numJoints))
+    write_line(htr, "NumFrames " + str(get_num_frames()))
+    write_line(htr, "DataFrameRate " + str(get_fps()))
+    write_line(htr, "EulerRotationOrder ZYX")
+    write_line(htr, "CalibrationUnits " + str(get_measurement_units()))
+    write_line(htr, "RotationUnits Degrees")
+    write_line(htr, "GlobalAxisofGravity Y")
+    write_line(htr, "BoneLengthAxis X")
+    write_line(htr, "ScaleFactor 1.00")
+    
+    write_line(htr, "[SegmentNames&Hierarchy]")
+    write_line(htr, "# ObjectName<tab>ParentObjectName<CR>")
+    write_line(htr, get_segment_names_and_hierarchy(rootJoint))
+    
+    htr.close()
     return
 
 
 
 def main():
     
-    rootJoint = handle_selected_joint()
-    print(rootJoint[0])
+    rootJoint, numJoints = handle_selected_joint()
+    print(rootJoint)
     
-    # Write to file
-    htr = open("HTR-Result.htr", "w")
-    htr.close()
+    write_htr_file(rootJoint, numJoints)
 
 
 if __name__ == "__main__":

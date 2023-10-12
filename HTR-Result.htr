@@ -1,0 +1,25 @@
+# Maya Export HTR
+[Header]
+# KeyWord<space>Value<CR>
+FileType htr
+DataType HTRS
+FileVersion 1
+NumSegments 7
+NumFrames 47
+DataFrameRate 24
+EulerRotationOrder ZYX
+CalibrationUnits mm
+RotationUnits Degrees
+GlobalAxisofGravity Y
+BoneLengthAxis X
+ScaleFactor 1.00
+[SegmentNames&Hierarchy]
+# ObjectName<tab>ParentObjectName<CR>
+tail1	GLOBAL
+tail2	tail1
+tail3	tail2
+tail4	tail3
+tail5	tail4
+tail6	tail5
+tail7	tail6
+
