@@ -11,7 +11,8 @@ class Joint:
     
     TO_STRING_INDENT_SPACING = 2
     
-    def __init__(self, _name, _parent, _children):
+    def __init__(self, _mayaObject, _name, _parent, _children):
+        self.mayaObject = _mayaObject
         self.name = _name
         self.parent = _parent
         self.children = _children
@@ -54,7 +55,7 @@ def construct_joint_hierarchy(mayaObject, jointParent = None) -> Joint:
     
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
-    newJoint = Joint(str(mayaObject), jointParent, None) # Construct new joint, fill in children later
+    newJoint = Joint(mayaObject, str(mayaObject), jointParent, None) # Construct new joint, fill in children later
     
     # Loop through children, and try to add them as joint children if they are joints
     for i in range(len(childMayaObjects)):
@@ -87,11 +88,13 @@ def handle_selected_joint():
     rootJoint = construct_joint_hierarchy(mayaSelectedObject)
     
     print(rootJoint)
+    
+    return rootJoint
 
 
 def main():
     
-    handle_selected_joint()
+    rootJoint = handle_selected_joint()
     
     print(cm.playbackOptions(fps = True))
         
@@ -103,7 +106,12 @@ def main():
     #print(cm.keyframe(keyframeCount = True)) # Error
     #print(cm.controller(allControllers = True)) # Returns None
     #print(cm.timeEditor(query = True)) # Error
-    print(cm.timeEditorClip())
+    #print(cm.timeEditorClip("TailClip", track = True, query = True))
+    #print(cm.keyframe(query = True, time = (0,)))
+
+    if rootJoint != None:
+        print(cm.keyframe(rootJoint.mayaObject, q = True))
+
 
 
 if __name__ == "__main__":
