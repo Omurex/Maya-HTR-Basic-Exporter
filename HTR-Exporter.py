@@ -125,7 +125,7 @@ def get_num_frames(mayaObject):
 
 
 
-def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> Joint:
+def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> (Joint, int):
     
     if(cm.objectType(mayaObject, isType = "joint") == False): # If passed in object isn't joint, return null
         return None
@@ -134,6 +134,7 @@ def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> Join
     
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
+    numJoints = 1 # Starts at 1 because we count ourselves
     
     # Get keyframe data for this joint for whole timeline
     timeline = get_transformation_info_for_timeline(mayaObject, numFrames)
@@ -143,17 +144,20 @@ def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> Join
     
     # If this joint has no children, we're done
     if childMayaObjects == None:
-        return newJoint
+        return newJoint, numJoints
         
     # Loop through children, and try to add them as joint children if they are joints
     for i in range(len(childMayaObjects)):
+        
         possibleJoint = construct_joint_hierarchy(childMayaObjects[i], numFrames, newJoint)
+        
         if possibleJoint != None:
-            childJoints.append(possibleJoint)
+            childJoints.append(possibleJoint[0])
+            numJoints += possibleJoint[1]
             
     newJoint.children = childJoints
             
-    return newJoint
+    return newJoint, numJoints
 
 
 
@@ -171,14 +175,17 @@ def handle_selected_joint():
     
     numFrames = get_num_frames(mayaSelectedObject)
     
-    rootJoint = construct_joint_hierarchy(mayaSelectedObject, numFrames)
+    rootJoint, numJoints = construct_joint_hierarchy(mayaSelectedObject, numFrames)
     
-    return rootJoint
+    return rootJoint, numJoints
 
 
 # Convert units found with "currentUnit" to an fps
 # Have to do it like this because for some reason fps isn't readily available to scripts
 def unit_to_fps(unit):
+    
+    # Used this form post to figure out how to get fps
+    # https://forums.autodesk.com/t5/maya-programming/getting-the-frames-per-second-of-a-scene/td-p/6543383
     
     match unit:
         
@@ -202,9 +209,18 @@ def unit_to_fps(unit):
             return float(unit.partition("fps")[0])
         
 
+def get_fps():
+    return unit_to_fps(cm.currentUnit(q = True, time = True))
+    
+    
+def get_units():
+    # Gets us our cm
+    return cm.currentUnit(q = True) 
+
 
 
 def write_htr_file(rootJoint):
+    
     return
 
 
@@ -212,22 +228,11 @@ def write_htr_file(rootJoint):
 def main():
     
     rootJoint = handle_selected_joint()
+    print(rootJoint[0])
     
     # Write to file
     htr = open("HTR-Result.htr", "w")
     htr.close()
-    
-    
-    print(cm.currentUnit(q = True)) # Gets us our cm
-    
-    # Used this form post to figure out how to get fps
-    # https://forums.autodesk.com/t5/maya-programming/getting-the-frames-per-second-of-a-scene/td-p/6543383
-    print(unit_to_fps(cm.currentUnit(q = True, time = True)))
-    #prevTime = cm.currentTime(q = True)
-    #cm.currentTime(1)
-    #fps = cm.currentTime(q = True) 
-    
-    
 
 
 if __name__ == "__main__":
