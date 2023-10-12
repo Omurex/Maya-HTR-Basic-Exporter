@@ -9,8 +9,30 @@ import maya.cmds as cm
 
 class Joint:
     
-    def __init__(self, _children):
+    TO_STRING_INDENT_SPACING = 2
+    
+    def __init__(self, _name, _children):
+        self.name = _name
         self.children = _children
+        
+    def __str__(self):
+        return self.to_hierarchy_string(0)
+
+    def to_hierarchy_string(self, spacing) -> str:
+        
+        returnStr = ""
+        
+        for i in range(spacing):
+            returnStr += " "
+        
+        returnStr += self.name
+        
+        for i in range(len(self.children)):
+            returnStr += "\n"
+            returnStr += self.children[i].to_hierarchy_string(spacing + self.TO_STRING_INDENT_SPACING)
+            
+        return returnStr
+
 
 
 def construct_joint_hierarchy(mayaObject) -> Joint:
@@ -22,14 +44,14 @@ def construct_joint_hierarchy(mayaObject) -> Joint:
     
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
-    print("PARENT: " + str(mayaObject) + " | CHILDREN: " + str(childMayaObjects))
+    #print("PARENT: " + str(mayaObject) + " | CHILDREN: " + str(childMayaObjects))
     
     for i in range(len(childMayaObjects)):
         possibleJoint = construct_joint_hierarchy(childMayaObjects[i])
         if possibleJoint != None:
             childJoints.append(possibleJoint)
             
-    return Joint(childJoints)
+    return Joint(str(mayaObject), childJoints)
     
     #joints.append(Joint(NULL, NULL))
 
@@ -50,13 +72,11 @@ def main():
         
     mayaSelectedObject = mayaSelectedObject[0] # Get first item in selection
     
-    
+    print(construct_joint_hierarchy(mayaSelectedObject))
         
     # Write to file
     htr = open("HTR-Result.htr", "w")
     htr.close()
-
-    construct_joint_hierarchy(mayaSelectedObject)
 
 #print(construct_joint_hierarchy(cm.ls(sl = True)[0]))
 
