@@ -155,10 +155,6 @@ def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> Join
             
     return newJoint
 
-#while(
-
-#relatives = cm.listRelatives(ad = True)
-#print(relatives)
 
 
 def handle_selected_joint():
@@ -180,33 +176,58 @@ def handle_selected_joint():
     return rootJoint
 
 
+# Convert units found with "currentUnit" to an fps
+# Have to do it like this because for some reason fps isn't readily available to scripts
+def unit_to_fps(unit):
+    
+    match unit:
+        
+        case "game":
+            return 15
+        case "film":
+            return 24
+        case "pal":
+            return 25
+        case "ntsc":
+            return 30
+        case "show":
+            return 48
+        case "palf":
+            return 50
+        case "ntscf":
+            return 60  
+            
+        case _:
+            # https://www.geeksforgeeks.org/python-string-till-substring/
+            return float(unit.partition("fps")[0])
+        
+
+
+
+def write_htr_file(rootJoint):
+    return
+
+
+
 def main():
     
     rootJoint = handle_selected_joint()
     
-    print(cm.playbackOptions(fps = True))
-        
     # Write to file
     htr = open("HTR-Result.htr", "w")
     htr.close()
-
-    # Found out how to interact with keyframe data from following video:
-    # https://www.youtube.com/watch?v=A5EnANHt9Rw
-    #if rootJoint != None:
-     #   keyframeChannels = cm.keyframe(rootJoint.mayaObject, q = True)
-     #   
-     #   if keyframeChannels == None:
-    #        return
-    ##    
-    #    keyframes = sorted(set(keyframeChannels))
-    #    print(keyframes)
-    #    
-    #    numFrames = int(round(keyframes[len(keyframes) - 1]))
-    #    
-    #    for i in range(numFrames):
-    #        print(cm.getAttr("{}.rotateZ".format(rootJoint.mayaObject), time = i))
-            
-
+    
+    
+    print(cm.currentUnit(q = True)) # Gets us our cm
+    
+    # Used this form post to figure out how to get fps
+    # https://forums.autodesk.com/t5/maya-programming/getting-the-frames-per-second-of-a-scene/td-p/6543383
+    print(unit_to_fps(cm.currentUnit(q = True, time = True)))
+    #prevTime = cm.currentTime(q = True)
+    #cm.currentTime(1)
+    #fps = cm.currentTime(q = True) 
+    
+    
 
 
 if __name__ == "__main__":
