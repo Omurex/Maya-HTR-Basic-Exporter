@@ -55,8 +55,12 @@ def construct_joint_hierarchy(mayaObject, jointParent = None) -> Joint:
     
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
-    newJoint = Joint(mayaObject, str(mayaObject), jointParent, None) # Construct new joint, fill in children later
+    newJoint = Joint(mayaObject, str(mayaObject), jointParent, []) # Construct new joint, fill in children later
     
+    # If this joint has no children, we're done
+    if childMayaObjects == None:
+        return newJoint
+        
     # Loop through children, and try to add them as joint children if they are joints
     for i in range(len(childMayaObjects)):
         possibleJoint = construct_joint_hierarchy(childMayaObjects[i], newJoint)
@@ -109,8 +113,20 @@ def main():
     #print(cm.timeEditorClip("TailClip", track = True, query = True))
     #print(cm.keyframe(query = True, time = (0,)))
 
+    # Found out how to interact with keyframe data from following video:
+    # https://www.youtube.com/watch?v=A5EnANHt9Rw
     if rootJoint != None:
-        print(cm.keyframe(rootJoint.mayaObject, q = True))
+        keyframeChannels = cm.keyframe(rootJoint.mayaObject, q = True)
+        
+        if keyframeChannels == None:
+            return
+        
+        keyframes = sorted(set(keyframeChannels))
+        print(keyframes)
+        
+        for i in range(len(keyframes)):
+            print(cm.getAttr("{}.rotateZ".format(rootJoint.mayaObject), time = keyframes[i]))
+            
 
 
 
