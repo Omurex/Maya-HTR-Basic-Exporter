@@ -38,6 +38,11 @@ class TransformationInfo:
         returnStr = "TRANSLATION: " + str(self.translation) + " | ROTATION: " + str(self.rotation) + \
             " | SCALE FACTOR: " + str(self.scaleFactor)
         return returnStr
+        
+        
+    def get_htr_format(self):
+        return str(self.translation[0]) + "\t" + str(self.translation[1]) + "\t" + str(self.translation[2]) + "\t" \
+            + str(self.rotation[0]) + "\t" + str(self.rotation[1]) + "\t" + str(self.rotation[2]) + "\t" + str(self.scaleFactor)
 
 
 class Joint:
@@ -222,7 +227,7 @@ def write_line(htr, line):
     htr.write(line + "\n")
 
 
-def get_segment_names_and_hierarchy(currentJoint) -> str:
+def get_segment_names_and_hierarchy_htr(currentJoint) -> str:
     
     returnStr = ""
     
@@ -234,6 +239,12 @@ def get_segment_names_and_hierarchy(currentJoint) -> str:
     for i in range(len(currentJoint.children)):
         returnStr += get_segment_names_and_hierarchy(currentJoint.children[i])
         
+    return returnStr
+    
+    
+def get_base_position_htr(currentJoint) -> str:
+    
+    returnStr = currentJoint.name + "\t" + currentJoint.frameTransformationInfo.data[0].get_htr_format()
     return returnStr
 
 
@@ -260,7 +271,14 @@ def write_htr_file(rootJoint, numJoints):
     
     write_line(htr, "[SegmentNames&Hierarchy]")
     write_line(htr, "# ObjectName<tab>ParentObjectName<CR>")
-    write_line(htr, get_segment_names_and_hierarchy(rootJoint))
+    
+    # Found rsplit example on this form:
+    # https://stackoverflow.com/questions/18731028/remove-last-instance-of-a-character-and-rest-of-a-string
+    write_line(htr, get_segment_names_and_hierarchy_htr(rootJoint).rsplit("\n", 1)[0])
+    
+    write_line(htr, "[BasePosition]")
+    write_line(htr, "# ObjectName<tab>Tx<tab>Ty<tab>Tz<tab>Rx<tab>Ry<tab>Rz<tab>BoneLength<CR>")
+    write_line(htr, get_base_position_htr(rootJoint))
     
     htr.close()
     return

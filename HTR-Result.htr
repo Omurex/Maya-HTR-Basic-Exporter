@@ -22,4 +22,6 @@ tail4	tail3
 tail5	tail4
 tail6	tail5
 tail7	tail6
-
+[BasePosition]
+# ObjectName<tab>Tx<tab>Ty<tab>Tz<tab>Rx<tab>Ry<tab>Rz<tab>BoneLength<CR>
+tail1	0.0	0.0	0.0	0.0	0.0	0.0	1.0
