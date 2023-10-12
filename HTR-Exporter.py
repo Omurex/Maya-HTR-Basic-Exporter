@@ -40,6 +40,15 @@ class TransformationInfo:
         return returnStr
         
         
+    def __sub__(self, other):
+        
+        newTranslation = [self.translation[0] - other.translation[0], self.translation[1] - other.translation[1], self.translation[2] - other.translation[2]]
+        newRotation = [self.rotation[0] - other.rotation[0], self.rotation[1] - other.rotation[1], self.rotation[2] - other.rotation[2]]
+        newInfo = TransformationInfo(newTranslation, newRotation, self.scaleFactor - other.scaleFactor)
+        
+        return newInfo
+        
+        
     def get_htr_format(self):
         return str(self.translation[0]) + "\t" + str(self.translation[1]) + "\t" + str(self.translation[2]) + "\t" \
             + str(self.rotation[0]) + "\t" + str(self.rotation[1]) + "\t" + str(self.rotation[2]) + "\t" + str(self.scaleFactor)
@@ -49,12 +58,12 @@ class Joint:
     
     TO_STRING_INDENT_SPACING = 2
     
-    def __init__(self, _mayaObject, _name, _parent, _children, _frameTransformationInfo):
+    def __init__(self, _mayaObject, _name, _parent, _children, _frameTransformationInfoTimeline):
         self.mayaObject = _mayaObject
         self.name = _name
         self.parent = _parent
         self.children = _children
-        self.frameTransformationInfo = _frameTransformationInfo
+        self.frameTransformationInfoTimeline = _frameTransformationInfoTimeline
         
     def __str__(self):
         return self.to_hierarchy_string(0)
@@ -215,7 +224,7 @@ def time_unit_to_fps(unit):
         
 
 def get_fps():
-    return unit_to_fps(cm.currentUnit(q = True, time = True))
+    return time_unit_to_fps(cm.currentUnit(q = True, time = True))
     
     
 def get_measurement_units():
@@ -237,18 +246,39 @@ def get_segment_names_and_hierarchy_htr(currentJoint) -> str:
         returnStr = currentJoint.name + "\t" + currentJoint.parent.name + "\n"
     
     for i in range(len(currentJoint.children)):
-        returnStr += get_segment_names_and_hierarchy(currentJoint.children[i])
+        returnStr += get_segment_names_and_hierarchy_htr(currentJoint.children[i])
         
     return returnStr
     
     
+def get_base_position(currentJoint) -> TransformationInfo:
+    
+    return currentJoint.frameTransformationInfoTimeline.data[0]
+    
+    
 def get_base_position_htr(currentJoint) -> str:
     
-    returnStr = currentJoint.name + "\t" + currentJoint.frameTransformationInfo.data[0].get_htr_format() + "\n"
+    returnStr = currentJoint.name + "\t" + get_base_position(currentJoint).get_htr_format() + "\n"
     
     for i in range(len(currentJoint.children)):
         returnStr += get_base_position_htr(currentJoint.children[i])
     
+    return returnStr
+    
+    
+def get_joint_timeline_data(currentJoint) -> str:
+    
+    returnStr = "[" + currentJoint.name + "]\n"
+    returnStr += "# Tx<tab>Ty<tab>Tz<tab>Rx<tab>Ry<tab>Rz<tab>BoneScaleFactor<CR>\n"
+    
+    basePose = get_base_position(currentJoint)
+    
+    for i in range(len(currentJoint.frameTransformationInfoTimeline.data)):
+        returnStr += str(i) + "\t" + (currentJoint.frameTransformationInfoTimeline.data[i] - basePose).get_htr_format() + "\n"
+        
+    for i in range(len(currentJoint.children)):
+        returnStr += get_joint_timeline_data(currentJoint.children[i])
+        
     return returnStr
 
 
@@ -283,6 +313,8 @@ def write_htr_file(rootJoint, numJoints):
     write_line(htr, "[BasePosition]")
     write_line(htr, "# ObjectName<tab>Tx<tab>Ty<tab>Tz<tab>Rx<tab>Ry<tab>Rz<tab>BoneLength<CR>")
     write_line(htr, get_base_position_htr(rootJoint).rsplit("\n", 1)[0])
+    
+    write_line(htr, get_joint_timeline_data(rootJoint))
     
     htr.close()
     return
