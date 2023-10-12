@@ -27,14 +27,16 @@ class TransformationInfoTimeline:
 
 class TransformationInfo:
     
-    def __init__(self, _translation, _rotation):
+    def __init__(self, _translation, _rotation, _scaleFactor):
         self.translation = _translation
         self.rotation = _rotation
+        self.scaleFactor = _scaleFactor
         
     
     def __str__(self):
         
-        returnStr = "TRANSLATION: " + str(self.translation) + " | ROTATION: " + str(self.rotation)
+        returnStr = "TRANSLATION: " + str(self.translation) + " | ROTATION: " + str(self.rotation) + \
+            " | SCALE FACTOR: " + str(self.scaleFactor)
         return returnStr
 
 
@@ -77,20 +79,24 @@ class Joint:
             return self.parent.name
 
 
+
 def get_transformation_info_at_time(mayaObject, time):
     
+    # All the below are floats
     translation = [0] * 3
-    rotation = [0] * 3
-    
     translation[0] = cm.getAttr("{}.translateX".format(mayaObject), time = time)
     translation[1] = cm.getAttr("{}.translateY".format(mayaObject), time = time)
     translation[2] = cm.getAttr("{}.translateZ".format(mayaObject), time = time)
     
+    rotation = [0] * 3
     rotation[0] = cm.getAttr("{}.rotateX".format(mayaObject), time = time)
     rotation[1] = cm.getAttr("{}.rotateY".format(mayaObject), time = time)
     rotation[2] = cm.getAttr("{}.rotateZ".format(mayaObject), time = time)
     
-    return TransformationInfo(translation, rotation)
+    scaleFactor = cm.getAttr("{}.scaleX".format(mayaObject), time = time)
+    
+    return TransformationInfo(translation, rotation, scaleFactor)
+
 
 
 def get_transformation_info_for_timeline(mayaObject, numFrames):
@@ -109,12 +115,13 @@ def get_num_frames(mayaObject):
     # Found out how to interact with keyframe data from following video:
     # https://www.youtube.com/watch?v=A5EnANHt9Rw
     
-    keyframeChannels = cm.keyframe(mayaObject, q = True)
-    keyframes = sorted(set(keyframeChannels))
+    # Old method, didn't work with root joint
+    #keyframeChannels = cm.keyframe(mayaObject, q = True)
+    #keyframes = sorted(set(keyframeChannels))
         
-    numFrames = int(round(keyframes[len(keyframes) - 1]))
+    #numFrames = int(round(keyframes[len(keyframes) - 1]))
     
-    return numFrames
+    return int(round(cm.playbackOptions(q = True, max = True)))
 
 
 
@@ -128,12 +135,11 @@ def construct_joint_hierarchy(mayaObject, numFrames, jointParent = None) -> Join
     childMayaObjects = cm.listRelatives(mayaObject, c = True) # Get list of children
     
     
-    
     # Get keyframe data for this joint for whole timeline
+    timeline = get_transformation_info_for_timeline(mayaObject, numFrames)
     
-    
-    
-    newJoint = Joint(mayaObject, str(mayaObject), jointParent, [], None) # Construct new joint, fill in children later
+    # Construct new joint, fill in children later
+    newJoint = Joint(mayaObject, str(mayaObject), jointParent, [], timeline)
     
     # If this joint has no children, we're done
     if childMayaObjects == None:
@@ -170,10 +176,6 @@ def handle_selected_joint():
     numFrames = get_num_frames(mayaSelectedObject)
     
     rootJoint = construct_joint_hierarchy(mayaSelectedObject, numFrames)
-    
-    print(get_transformation_info_for_timeline(rootJoint.mayaObject, numFrames))
-    
-    print(rootJoint)
     
     return rootJoint
 
