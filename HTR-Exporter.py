@@ -135,7 +135,7 @@ def get_num_frames():
         
     #numFrames = int(round(keyframes[len(keyframes) - 1]))
     
-    return int(round(cm.playbackOptions(q = True, max = True)))
+    return int(round(cm.playbackOptions(q = True, max = True)) - round(cm.playbackOptions(q = True, min = True))) + 1
 
 
 
@@ -284,7 +284,7 @@ def get_joint_timeline_data(currentJoint) -> str:
 
 def write_htr_file(rootJoint, numJoints):
     # Write to file
-    htr = open("HTR-Result.htr", "w")
+    htr = open("maya_export.htr", "w")
     
     write_line(htr, "# Maya Export HTR")
     
@@ -315,6 +315,8 @@ def write_htr_file(rootJoint, numJoints):
     write_line(htr, get_base_position_htr(rootJoint).rsplit("\n", 1)[0])
     
     write_line(htr, get_joint_timeline_data(rootJoint))
+    
+    write_line(htr, "[EndOfFile]")
     
     htr.close()
     return
