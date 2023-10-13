@@ -314,9 +314,9 @@ def write_htr_file(rootJoint, numJoints):
     write_line(htr, "# ObjectName<tab>Tx<tab>Ty<tab>Tz<tab>Rx<tab>Ry<tab>Rz<tab>BoneLength<CR>")
     write_line(htr, get_base_position_htr(rootJoint).rsplit("\n", 1)[0])
     
-    write_line(htr, get_joint_timeline_data(rootJoint))
+    write_line(htr, get_joint_timeline_data(rootJoint).rsplit("\n", 1)[0])
     
-    write_line(htr, "[EndOfFile]")
+    htr.write("[EndOfFile]")
     
     htr.close()
     return
