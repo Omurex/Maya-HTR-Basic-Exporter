@@ -97,14 +97,15 @@ class Joint:
 def get_transformation_info_at_time(mayaObject, time):
     
     # All the below are floats
+    # Note: X and Y are swapped because Animal3D uses Y as forward for joint instead of X
     translation = [0] * 3
-    translation[0] = cm.getAttr("{}.translateX".format(mayaObject), time = time)
-    translation[1] = cm.getAttr("{}.translateY".format(mayaObject), time = time)
+    translation[1] = cm.getAttr("{}.translateX".format(mayaObject), time = time)
+    translation[0] = cm.getAttr("{}.translateY".format(mayaObject), time = time)
     translation[2] = cm.getAttr("{}.translateZ".format(mayaObject), time = time)
     
     rotation = [0] * 3
-    rotation[0] = cm.getAttr("{}.rotateX".format(mayaObject), time = time)
-    rotation[1] = cm.getAttr("{}.rotateY".format(mayaObject), time = time)
+    rotation[1] = cm.getAttr("{}.rotateX".format(mayaObject), time = time)
+    rotation[0] = cm.getAttr("{}.rotateY".format(mayaObject), time = time)
     rotation[2] = cm.getAttr("{}.rotateZ".format(mayaObject), time = time)
     
     scaleFactor = cm.getAttr("{}.scaleX".format(mayaObject), time = time)
